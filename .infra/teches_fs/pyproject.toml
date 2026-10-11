@@ -1,0 +1,17 @@
+[project]
+name = "teches_fs"
+version = "1.0.0"
+description = "Automated out-of-the-box CLI helper for Node.js file system actions."
+dependencies = [
+    "click>=8.0"
+]
+
+[tool.setuptools]
+packages = ["actions", "plumbing_scripts", "actions.create", "actions.delete", "actions.edit"]
+
+[project.scripts]
+teches = "plumbing_scripts.plumbing_main:cli"
+
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
