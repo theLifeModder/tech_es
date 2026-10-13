@@ -1,4 +1,5 @@
 extra/
 bio_fuel/
 node_modules/
-.infra\.tesenv
+.infra/env/.tesenv
+.infra/nvctx/*
