@@ -1,0 +1,27 @@
+{
+  "keymap": {
+    "keys": [
+      { "name": "PARENT_PROJECT_LOC", "function": "", "input": "" },
+      { "name": "PARENT_PROJECT_LOC", "function": "", "input": "" }
+    ]
+  },
+  "translators": {
+    "languages": [
+      {
+        "javascript": {
+          "command": "python",
+          "script": "js_to_py.py"
+        },
+        "java": {
+          "command": "java2python",
+          "script": ""
+        },
+        "cpp": {
+          "command": "python",
+          "script": "cpp_to_py.py"
+        }
+      }
+    ]
+  },
+  "translators_dir": "./translators"
+}
