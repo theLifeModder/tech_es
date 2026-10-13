@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Generate commit message template",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}\\.infra\\env\\bin\\generate_commit_message.js",
+        "${workspaceFolder}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "reveal": "never",
+        "focus": false,
+        "panel": "dedicated"
+      }
+    }
+  ]
+}
