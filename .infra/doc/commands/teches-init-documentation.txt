@@ -1,0 +1,207 @@
+﻿teches init
+—------------------------------
+NAME: 
+—------------------------------
+            teches init
+—------------------------------
+SYNOPSIS:
+—------------------------------
+
+        $ teches init (--help|-h) | (&((--force|-f) &(<boolean>)) &((-n|--install-loc) <parent-path>) &((--keymap-loc|-k) <parent-path>) &((--nvctx-loc|-n) <parent-path>) &((--project-restore-loc|-p) <parent-path>) &((--include|-i ) ^^^<({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)>) &((--exclude|-x ) ^^^<({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)>)) (--module <({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)> --location <parent-path>) --username <username> --email <email>
+
+        Key:
+        - The entire command synopsis is made out of blocks and operators. A block is contained in () or [] or <>. Blocks can be made out of smaller blocks. For example, ((set1)|(set2)) is a block made up of 2 smaller blocks and an operator. Operators specify something about the blocks they are placed by. In the previous example, the | operator specifies that the two blocks surrounding it cannot be in the command together.
+        – If multiple sets of args/options are contained in () and each set is separated by | , then the sets are mutually exclusive. If the () are preceded by &, as in &( set 1 | set 2 ), then the whole thing is optional, so you can have 0 or 1 occurrences of either set 1 or set 2. If the () are preceded by white space, such as in ( set 1 | set 2 ), then you need exactly 1 occurrence of either set 1 or set 2. Finally, if the () are preceded by ^^, as in ^^( set 1 | set 2 ), then the whole thing is optional and repeatable, so you can have 0 or more, and as many as you want, occurrences of either set 1 or set 2. ^^^, as in ^^^( set 1 | set 2 ) is exactly the same as ^^, but having 0 occurrences is not allowed, so you need at least 1 of either set 1 or set 2.
+        – ^^ Means "0 or more instances of" and ^^^ means "1 or more instances of". (^^<var>) means either ( ) or ( <var> ) or ( <var> <var> ) or ( <var> <var> <var> ) or ( <var> <var> <var> <var> ) or …
+        – ( {} … ) means predetermined value. ( {val} val1, val2, val3, val4 ) means that the value of val must be either val1, val2, val3, or val4.
+        – {} by itself represents a substitution. The value inside the {} is a substitute for the actual value, and it often describes that value. For instance, if your projects location is “/users/someuser/”, then {project_location}/file.txt is equivalent to “/users/someuser/file.txt”. You just substitute the value with (usually) what it is describing.
+        
+
+—------------------------------
+PROJECT LEVEL:
+—------------------------------
+
+        Parent
+
+—------------------------------
+LOCATION:
+—------------------------------
+
+        {project_location}/teches/node_modules/@teches_infra/teches_init/
+
+—------------------------------
+DESCRIPTION:
+—------------------------------
+
+        This command will be used for initializing the infrastructure for the project. This includes, but it's not limited to, installing the environment’s tools and systems, such as the keymap and  environment context tools, along with installing all of the other teches commands and making them available to be run. At the moment, it just returns the string “true”. 
+
+        It will also create a "user" folder at .infra/env/config/user/ which contains a file user.ini. It will contain profile called [default] which contains 2 variables, username and email. When you run the command, you will be asked to give a username and an email. These are filled out with the answers you give. 
+
+—------------------------------
+NOTES:
+—------------------------------
+            
+        This command is different from all the others, as it needs to be installed on its own. When the others are installed, this command is used to install them so it needs to be recognized before that point. For this reason, I will make this project available as a release on GitHub. When a user wants to be a developer, they download the release and install it. All this will do is put the folder where it needs to be and install this command so it can be used to install the others. 
+
+—------------------------------
+OPTIONS:
+—------------------------------
+        NAME:   
+                --force|-f
+            
+        ALIASES:
+                -f
+        
+        DESC:
+                This option forces the install in situations where the command would normally fail, such as if it is already installed. Be careful with this one. If the regular command is failing, there is probably a good reason. The better option would be to find out what this reason is and fix the issue.
+        
+        USAGE:
+                The usage for this option is very simple. It works in about any situation when adding to this command. It takes one parameter which is either “true” or “false”, but it is not needed. You can just add the option by itself and it will do its thing.
+
+        —--------------------
+        NAME:
+                –install-loc
+
+        ALIASES:
+                -n
+
+        DESC:
+                When used by itself, this will determine where the entire infrastructure is installed. This includes all of the commands, the key map system, the nvctx system, and any other tools or systems available to tech-es developers. However, if you just need a different location for one of these systems, look at the synopsis for this command. Options are available for just about any of the tools or systems to be installed in a custom location. If you find that you are using most of the other options in the command, you might want to reevaluate how you run it. Using this command to install the entire package somewhere else alongside one or two of the other options, to which you would pass the default location as the argument. 
+
+
+        USAGE:
+                This command can be used with any of the others, but is often used by itself or with the  –force/-f command.
+
+        —--------------------
+        NAME:
+                –keymap-loc
+        
+        ALIASES:
+                -k
+        
+        DESC:
+                This command dictates where the keymap system will be installed. The default location is {project}/.infra/env/keymap/. The new location for the key map folder will start with whatever path you give as the argument for this option, and will be {argument}/keymap/.
+
+        USAGE:
+                This option can be used with any of the others, and it is often used with the –install-loc option to get the keymap system installed back in its original location when other systems will be installed somewhere else.
+
+                The option takes one argument <path>. This is to be the path where the key map system will be installed.
+
+        —--------------------
+        NAME:
+                –nvctx-loc
+
+        ALIASES:
+                -n
+        
+        DESC:
+                This command dictates where the nvctx system will be installed. The default location is {project}/.infra/env/nvctx/. The new location for the nvctx/ folder will start with whatever path you give as the argument for this option, and will be {argument}/nvctx/.
+
+        USAGE:
+                This option can be used with any of the others, and it is often used with the –install-loc option to get the key map system installed back in its original location when other systems will be installed somewhere else.
+
+                The option takes one argument <path>. This is to be the path where the key map system will be installed.
+
+        —--------------------
+        NAME:
+                --project-restore-loc <path>
+
+        ALIASES:
+                -p
+
+        DESC:
+                This command dictates where the project-restore system will be installed. The default location is {project}/.infra/env/restore-sys/. The new location for the restore-sys folder will start with whatever path you give as the argument for this option, and will be {argument}/restore-sys/.
+
+        USAGE:
+                This option can be used with any of the others, and it is often used with the –install-loc option to get the key map system installed back in its original location when other systems will be installed somewhere else.
+
+                The option takes one argument <path>. This is to be the path where the key map system will be installed.
+        ------------------------------
+        NAME:
+                –module <module>
+
+        ALIASES:
+                -m
+
+        DESC: 
+                This command is used in conjunction with the location option to specify that a module lives at a certain location. It does not move anything anywhere. It is used if you have moved it from the default location by other means, so the installer knows where it is located. If a tool has been moved and this option does not specify it, The install will fail. 
+
+        USAGE:
+
+
+—------------------------------
+        NAME:
+                –location <system:path>
+
+        ALIASES:
+                -l
+
+        DESC: 
+                This command is used to tell the command where a tool is located in the event that it isn't in its default location  at .infra/bin/. It is used in conjunction with the location option to specify that a module lives at a certain location. It does not move anything anywhere. It is used if you have moved it from the default location by other means, so the installer knows where it is located. If a tool has been moved and this option does not specify it, The install will fail.
+
+        USAGE:
+
+
+—------------------------------
+        NAME:
+                --include <module><module><module>...
+
+
+        ALIASES:
+                -N
+
+
+        DESC: 
+                Defines a list of modules that you want to include in the install. When this option is used, any module in this list will be ignored when all the other modules are installed.
+
+
+        USAGE: 
+                Can be used with the --force, --install-loc, --keymap-loc --nvctx-loc, --project-restore-loc, and/or --include options and their single-letter counterparts.
+
+        —------------------------------
+        NAME:
+                --exclude <module><module><module>...
+
+        ALIASES:
+                -X
+        
+        DESC: 
+                Defines a list of modules that you want to exclude from the install. Any module in this list will be ignored when all the other modules are installed.
+
+
+        USAGE: 
+                Can be used with the --force, --install-loc, --keymap-loc --nvctx-loc, --project-restore-loc, and/or --include options and their single-letter counterparts.
+
+—------------------------------
+        NAME:
+                --username
+
+
+        ALIASES:
+                -U
+
+
+        DESC: 
+                Normally, the command is interactive and asks the user to supply a username. If this option is included, however, the command will bypass this and include the name given to the option instead.
+
+
+        USAGE: 
+                This option can be used with any of the other options that come with this command. If it is used, however, the username argument must be passed to it. If it is given with no argument, the command will fail.
+
+        —------------------------------
+        NAME:
+                --email
+
+
+        ALIASES:
+                -E
+
+
+        DESC: 
+                Normally, the command is interactive and asks the user to supply an email. If this option is included, however, the command will bypass this and include the name given to the option instead.
+
+
+        USAGE: 
+                This option can be used with any of the other options that come with this command. If it is used, however, the email argument must be passed to it. If it is given with no argument, the command will fail.
+
+        —------------------------------
