@@ -7,7 +7,7 @@ NAME:
 SYNOPSIS:
 —------------------------------
 
-        $ teches init (--help|-h) | (&((--force|-f) &(<boolean>)) &((-n|--install-loc) <parent-path>) &((--keymap-loc|-k) <parent-path>) &((--nvctx-loc|-n) <parent-path>) &((--project-restore-loc|-p) <parent-path>) &((--include|-i ) ^^^<({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)>) &((--exclude|-x ) ^^^<({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)>)) (--module <({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)> --location <parent-path>) --username <username> --email <email>
+        $ teches init (--help|-h) | (&((--force|-f) &(<boolean>)) &((-I|--install-loc) <parent-path>) &((--keymap-loc|-k) <parent-path>) &((--nvctx-loc|-n) <parent-path>) &((--project-restore-loc|-p) <parent-path>) &((--include|-i ) ^^^<({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)>) &((--exclude|-x ) ^^^<({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)>)) (--module <({module}install, config, infra, repo, fs, version, project, env, nvctx, keymap)> --location <parent-path>) --username <username> --email <email>
 
         Key:
         - The entire command synopsis is made out of blocks and operators. A block is contained in () or [] or <>. Blocks can be made out of smaller blocks. For example, ((set1)|(set2)) is a block made up of 2 smaller blocks and an operator. Operators specify something about the blocks they are placed by. In the previous example, the | operator specifies that the two blocks surrounding it cannot be in the command together.
@@ -27,15 +27,15 @@ PROJECT LEVEL:
 LOCATION:
 —------------------------------
 
-        {project_location}/teches/node_modules/@teches_infra/teches_init/
+        {project_location}/.infra/bin/teches_init/
 
 —------------------------------
 DESCRIPTION:
 —------------------------------
 
-        This command will be used for initializing the infrastructure for the project. This includes, but it's not limited to, installing the environment’s tools and systems, such as the keymap and  environment context tools, along with installing all of the other teches commands and making them available to be run. At the moment, it just returns the string “true”. 
+        This command initializes the project's TechES infrastructure. It stores the user's username and email in the default profile, installs matching TechES Python packages from .infra/bin in editable mode, and installs the commit-message generator from .infra/env/bin/teches_commit_message_generator. It reports the generator installation start and success in the terminal, and reports errors if installation fails. It supports module filters, custom infrastructure locations, and system location overrides.
 
-        It will also create a "user" folder at .infra/env/config/user/ which contains a file user.ini. It will contain profile called [default] which contains 2 variables, username and email. When you run the command, you will be asked to give a username and an email. These are filled out with the answers you give. 
+        It will also create a "user" folder at .infra/env/config/user/ which contains a file userdata.ini. It will contain profile called [default] which contains 2 variables, username and email. When you run the command, you will be asked to give a username and an email unless they were provided with --username and --email. These are filled out with the answers you give.
 
 —------------------------------
 NOTES:
@@ -63,7 +63,7 @@ OPTIONS:
                 –install-loc
 
         ALIASES:
-                -n
+                -I
 
         DESC:
                 When used by itself, this will determine where the entire infrastructure is installed. This includes all of the commands, the key map system, the nvctx system, and any other tools or systems available to tech-es developers. However, if you just need a different location for one of these systems, look at the synopsis for this command. Options are available for just about any of the tools or systems to be installed in a custom location. If you find that you are using most of the other options in the command, you might want to reevaluate how you run it. Using this command to install the entire package somewhere else alongside one or two of the other options, to which you would pass the default location as the argument. 
@@ -148,29 +148,29 @@ OPTIONS:
 
 
         ALIASES:
-                -N
+                -i
 
 
         DESC: 
-                Defines a list of modules that you want to include in the install. When this option is used, any module in this list will be ignored when all the other modules are installed.
+                Defines the modules to install. When this option is used, modules not listed are omitted. Give one or more module values after the option; the option may also be repeated.
 
 
         USAGE: 
-                Can be used with the --force, --install-loc, --keymap-loc --nvctx-loc, --project-restore-loc, and/or --include options and their single-letter counterparts.
+                Can be used with one or more module values and the other options.
 
         —------------------------------
         NAME:
                 --exclude <module><module><module>...
 
         ALIASES:
-                -X
+                -x
         
         DESC: 
-                Defines a list of modules that you want to exclude from the install. Any module in this list will be ignored when all the other modules are installed.
+                Defines modules to omit from the install. Give one or more module values after the option; the option may also be repeated. If a module appears in both --include and --exclude, it is omitted.
 
 
         USAGE: 
-                Can be used with the --force, --install-loc, --keymap-loc --nvctx-loc, --project-restore-loc, and/or --include options and their single-letter counterparts.
+                Can be used with one or more module values and the other options.
 
 —------------------------------
         NAME:
