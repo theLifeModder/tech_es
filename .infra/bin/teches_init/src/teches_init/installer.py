@@ -9,6 +9,7 @@ import sys
 from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
+from typing import Callable
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
 
@@ -39,6 +40,9 @@ SYSTEM_NAME_BY_MODULE = {
     "nvctx": "nvctx",
     "project": "restore-sys",
 }
+COMMIT_MESSAGE_GENERATOR_DIRECTORY = Path(
+    "env/bin/teches_commit_message_generator"
+)
 
 
 @dataclass(frozen=True)
@@ -238,7 +242,44 @@ def _system_source_directory(
     return source_infra / SYSTEM_SOURCE_BY_MODULE[module]
 
 
-def install_infrastructure(project_root: Path, options: InstallOptions) -> list[Path]:
+def _install_commit_message_generator(
+    project_root: Path,
+    infra_root: Path,
+    custom_infra_root: bool,
+    copy_whole_infra: bool,
+    force: bool,
+    status_callback: Callable[[str], None] | None,
+) -> None:
+    """Install the commit-message generator and report progress through the CLI."""
+    source_directory = project_root / ".infra" / COMMIT_MESSAGE_GENERATOR_DIRECTORY
+    if not source_directory.is_dir():
+        raise FileNotFoundError(
+            f"Commit message generator package was not found: {source_directory}"
+        )
+
+    install_directory = source_directory
+    if custom_infra_root:
+        install_directory = infra_root / COMMIT_MESSAGE_GENERATOR_DIRECTORY
+        if not copy_whole_infra:
+            _copy_directory(source_directory, install_directory, force)
+
+    if status_callback is not None:
+        status_callback("Installing TechES commit message generator...")
+    try:
+        _install_editable(install_directory, force)
+    except (OSError, RuntimeError) as error:
+        raise RuntimeError(
+            f"Failed to install TechES commit message generator: {error}"
+        ) from error
+    if status_callback is not None:
+        status_callback("Successfully installed TechES commit message generator.")
+
+
+def install_infrastructure(
+    project_root: Path,
+    options: InstallOptions,
+    status_callback: Callable[[str], None] | None = None,
+) -> list[Path]:
     """Install selected command packages and copy selected system directories."""
     source_infra = project_root / ".infra"
     infra_root = (
@@ -265,6 +306,15 @@ def install_infrastructure(project_root: Path, options: InstallOptions) -> list[
                 _copy_directory(package_directory, install_directory, options.force)
         _install_editable(install_directory, options.force)
         installed_packages.append(install_directory)
+
+    _install_commit_message_generator(
+        project_root,
+        infra_root,
+        custom_infra_root,
+        copy_whole_infra,
+        options.force,
+        status_callback,
+    )
 
     for module in SYSTEM_SOURCE_BY_MODULE:
         if not _is_selected(module, options):

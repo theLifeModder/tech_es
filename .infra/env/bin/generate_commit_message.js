@@ -119,7 +119,7 @@ function formatCompactFiles(files, allFiles = files) {
     }
 
     const filesInDirectory = [...repositoryPaths].filter(
-      (file) => directory === '.' || file.startsWith(`${directory}/`),
+      (file) => path.posix.dirname(file) === directory,
     );
     if (
       filesInDirectory.length > 0 &&

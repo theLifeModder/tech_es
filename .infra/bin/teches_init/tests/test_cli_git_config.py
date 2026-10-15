@@ -119,6 +119,34 @@ class GitConfigPromptTests(unittest.TestCase):
         )
         install_infrastructure.assert_not_called()
 
+    @patch(
+        "teches_init.cli.install_infrastructure",
+        side_effect=RuntimeError(
+            "Failed to install TechES commit message generator: pip returned exit code 1"
+        ),
+    )
+    @patch("teches_init.cli.save_default_profile", return_value=Path("userdata.ini"))
+    @patch("teches_init.cli.find_project_root", return_value=Path("project"))
+    def test_generator_install_failure_is_printed(
+        self,
+        _find_project_root: unittest.mock.Mock,
+        _save_default_profile: unittest.mock.Mock,
+        _install_infrastructure: unittest.mock.Mock,
+    ) -> None:
+        """Show generator installation errors in the terminal as a CLI error."""
+        result = self.runner.invoke(
+            cli_module.cli,
+            ["init", "--username", "Example User", "--email", "user@example.com"],
+            input="n\n",
+        )
+
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn(
+            "Error: Failed to install TechES commit message generator: "
+            "pip returned exit code 1",
+            result.output,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

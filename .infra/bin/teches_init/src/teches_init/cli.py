@@ -202,7 +202,7 @@ def init_command(
         module_location=location,
     )
     try:
-        installed = install_infrastructure(project_root, options)
+        installed = install_infrastructure(project_root, options, click.echo)
     except (OSError, ValueError, RuntimeError) as error:
         raise click.ClickException(str(error)) from error
 

@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from teches_init.installer import _install_editable
+from teches_init.installer import (
+    COMMIT_MESSAGE_GENERATOR_DIRECTORY,
+    _install_commit_message_generator,
+    _install_editable,
+)
 
 
 class EditableInstallTests(unittest.TestCase):
@@ -57,6 +62,75 @@ class EditableInstallTests(unittest.TestCase):
             ],
             check=False,
         )
+
+
+class CommitMessageGeneratorInstallTests(unittest.TestCase):
+    """Check initialization installs the bundled generator and reports its outcome."""
+
+    def setUp(self) -> None:
+        """Create a temporary project containing the expected generator package."""
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary_directory.cleanup)
+        self.project_root = Path(self.temporary_directory.name)
+        self.generator_directory = (
+            self.project_root / ".infra" / COMMIT_MESSAGE_GENERATOR_DIRECTORY
+        )
+        self.generator_directory.mkdir(parents=True)
+        (self.generator_directory / "pyproject.toml").write_text(
+            "[project]\nname = 'teches-commit-message-generator'\n",
+            encoding="utf-8",
+        )
+
+    @patch("teches_init.installer._install_editable")
+    def test_reports_start_and_successful_install(
+        self, install_editable: unittest.mock.Mock
+    ) -> None:
+        """Log the generator's start and success while installing the project source."""
+        messages: list[str] = []
+
+        _install_commit_message_generator(
+            self.project_root,
+            self.project_root / ".infra",
+            custom_infra_root=False,
+            copy_whole_infra=False,
+            force=False,
+            status_callback=messages.append,
+        )
+
+        install_editable.assert_called_once_with(self.generator_directory, False)
+        self.assertEqual(
+            messages,
+            [
+                "Installing TechES commit message generator...",
+                "Successfully installed TechES commit message generator.",
+            ],
+        )
+
+    @patch(
+        "teches_init.installer._install_editable",
+        side_effect=RuntimeError("pip returned exit code 1"),
+    )
+    def test_raises_package_specific_error_on_install_failure(
+        self, install_editable: unittest.mock.Mock
+    ) -> None:
+        """Propagate install failures with the generator package named explicitly."""
+        messages: list[str] = []
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "Failed to install TechES commit message generator: pip returned exit code 1",
+        ):
+            _install_commit_message_generator(
+                self.project_root,
+                self.project_root / ".infra",
+                custom_infra_root=False,
+                copy_whole_infra=False,
+                force=False,
+                status_callback=messages.append,
+            )
+
+        install_editable.assert_called_once()
+        self.assertEqual(messages, ["Installing TechES commit message generator..."])
 
 
 if __name__ == "__main__":

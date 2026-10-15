@@ -19,7 +19,7 @@ test('groups staged files with the same root parent using semicolons', function 
   assert.equal(
     formatCompactFiles(
       ['.gitignore', 'README.md'],
-      ['.gitignore', 'README.md', 'src/app.js'],
+      ['.gitignore', 'README.md', 'LICENSE', 'src/app.js'],
     ),
     '{proj}/.gitignore;README.md',
   );
@@ -63,6 +63,16 @@ test('uses the project wildcard only when all project files are staged', functio
   const files = ['.gitignore', 'docs/guide.md'];
 
   assert.equal(formatCompactFiles(files, files), '{proj}/*');
+});
+
+/** Avoid advertising a parent wildcard when staged files live only in a child folder. */
+test('does not use a wildcard for a directory that contains only subdirectories', function testNestedFilesUseLeafWildcard() {
+  const files = ['src/pkg/__init__.py', 'src/pkg/cli.py'];
+
+  assert.equal(
+    formatCompactFiles(files, files),
+    '{proj}/src/pkg/*',
+  );
 });
 
 /** Compact complete directories while preserving exact paths from partial ones. */

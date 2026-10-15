@@ -19,6 +19,9 @@ current project's local Git config with those values. If confirmed, it sets
 change the global Git config. It also writes the values to
 `.infra/env/config/user/userdata.ini` under the `[default]` profile, then
 installs editable TechES packages found under `.infra/bin`.
+Initialization also installs the commit-message generator from
+`.infra/env/bin/teches_commit_message_generator`, reporting its installation
+progress and any failures in the terminal.
 
 Command packages register subcommands through the `teches.commands` Python
 entry-point group. The bootstrap package owns the `teches` executable so

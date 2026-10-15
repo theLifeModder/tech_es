@@ -4,13 +4,17 @@
     {
       "label": "Generate commit message template",
       "type": "process",
-      "command": "node",
+      "command": "python",
       "args": [
-        "${workspaceFolder}\\.infra\\env\\bin\\generate_commit_message.js",
+        "-m",
+        "teches_commit_message_generator",
         "${workspaceFolder}"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}${/}.infra${/}env${/}bin${/}teches_commit_message_generator${/}src"
+        }
       },
       "problemMatcher": [],
       "presentation": {

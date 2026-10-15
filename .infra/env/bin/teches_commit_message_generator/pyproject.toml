@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "teches-commit-message-generator"
+version = "0.2.0"
+description = "Generate commit messages from staged files and a project template."
+requires-python = ">=3.10"
+
+[project.scripts]
+teches-commit-message = "teches_commit_message_generator.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
