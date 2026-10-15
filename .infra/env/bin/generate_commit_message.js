@@ -10,6 +10,7 @@ const TEMPLATE_RELATIVE_PATH = path.join(
 );
 const SKIPPED_DIRECTORY_NAMES = new Set(['.git', 'node_modules']);
 
+/** Return a Git repository's root directory, or null when the path is outside one. */
 function gitRoot(directory) {
   const result = spawnSync(
     'git',
@@ -25,6 +26,7 @@ function gitRoot(directory) {
   return result.stdout.trim();
 }
 
+/** Find the workspace repository and any immediate nested repositories. */
 function discoverRepositories(workspaceRoot) {
   const root = gitRoot(workspaceRoot);
   if (!root) {
@@ -44,6 +46,7 @@ function discoverRepositories(workspaceRoot) {
   return [...roots];
 }
 
+/** Return the repository's staged paths in stable sorted order. */
 function stagedFiles(repositoryRoot) {
   const output = execFileSync(
     'git',
@@ -57,19 +60,56 @@ function stagedFiles(repositoryRoot) {
     .sort((left, right) => left.localeCompare(right));
 }
 
-function formatCompactFiles(files) {
+/** Return tracked and non-ignored untracked paths visible to Git. */
+function repositoryFiles(repositoryRoot) {
+  const output = execFileSync(
+    'git',
+    [
+      '-C',
+      repositoryRoot,
+      'ls-files',
+      '--cached',
+      '--others',
+      '--exclude-standard',
+      '-z',
+    ],
+    { encoding: 'buffer' },
+  );
+  return output
+    .toString('utf8')
+    .split('\0')
+    .filter(Boolean);
+}
+
+/** Collect every directory containing at least one staged or repository file. */
+function fileDirectories(files) {
   const directories = new Set();
   for (const file of files) {
-    directories.add(path.posix.dirname(file));
+    let directory = path.posix.dirname(file);
+    while (true) {
+      directories.add(directory);
+      if (directory === '.') {
+        break;
+      }
+      directory = path.posix.dirname(directory);
+    }
   }
+  return directories;
+}
 
-  const coveredDirectories = [];
+/** Summarize staged files, using a wildcard only for fully staged directories. */
+function formatCompactFiles(files, allFiles = files) {
+  const staged = new Set(files);
+  const repositoryPaths = new Set([...allFiles, ...files]);
+  const directories = fileDirectories(repositoryPaths);
+  const wildcardDirectories = [];
+
   for (const directory of [...directories].sort(
     (left, right) => left.split('/').length - right.split('/').length ||
       left.localeCompare(right),
   )) {
     if (
-      coveredDirectories.some(
+      wildcardDirectories.some(
         (parent) =>
           parent === '.' ||
           directory.startsWith(`${parent}/`),
@@ -77,27 +117,69 @@ function formatCompactFiles(files) {
     ) {
       continue;
     }
-    coveredDirectories.push(directory);
+
+    const filesInDirectory = [...repositoryPaths].filter(
+      (file) => directory === '.' || file.startsWith(`${directory}/`),
+    );
+    if (
+      filesInDirectory.length > 0 &&
+      filesInDirectory.every((file) => staged.has(file))
+    ) {
+      wildcardDirectories.push(directory);
+    }
   }
 
-  return coveredDirectories
-    .sort((left, right) => left.localeCompare(right))
-    .map((directory) =>
-      directory === '.' ? '{proj}/*' : `{proj}/${directory}/*`,
-    )
+  const compactPaths = wildcardDirectories.map((directory) => ({
+    sortPath: directory,
+    displayPath: directory === '.' ? '{proj}/*' : `{proj}/${directory}/*`,
+  }));
+
+  const stagedFilesByDirectory = new Map();
+  for (const file of files) {
+    const directory = path.posix.dirname(file);
+    if (
+      wildcardDirectories.some(
+        (wildcardDirectory) =>
+          wildcardDirectory === '.' ||
+          directory === wildcardDirectory ||
+          directory.startsWith(`${wildcardDirectory}/`),
+      )
+    ) {
+      continue;
+    }
+
+    const siblings = stagedFilesByDirectory.get(directory) ?? [];
+    siblings.push(path.posix.basename(file));
+    stagedFilesByDirectory.set(directory, siblings);
+  }
+
+  for (const [directory, filenames] of stagedFilesByDirectory) {
+    const commonPath = directory === '.' ? '{proj}' : `{proj}/${directory}`;
+    compactPaths.push({
+      sortPath: directory === '.' ? filenames[0] : `${directory}/${filenames[0]}`,
+      displayPath: `${commonPath}/${filenames.join(';')}`,
+    });
+  }
+
+  return compactPaths
+    .sort((left, right) => left.sortPath.localeCompare(right.sortPath))
+    .map(({ displayPath }) => displayPath)
     .join(', ');
 }
 
+/** Format a staged path using the commit template's project-relative notation. */
 function formatFilePath(file) {
   return `{proj}/${file}`;
 }
 
+/** Format a date as the template's MMDDYYYY value. */
 function formatDate(date = new Date()) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${month}${day}${date.getFullYear()}`;
 }
 
+/** Remove comment blocks and line comments from a commit-message template. */
 function stripTemplateComments(template) {
   let output = '';
   let cursor = 0;
@@ -128,6 +210,7 @@ function stripTemplateComments(template) {
   return output.replace(/\/\/[^\r\n]*/g, '');
 }
 
+/** Select the matching repository section, shared section, or whole template. */
 function selectTemplate(templateFile, repositoryName) {
   const uncommentedTemplate = stripTemplateComments(templateFile);
   const lines = uncommentedTemplate.match(/[^\n]*\n|[^\n]+$/g) || [];
@@ -162,11 +245,12 @@ function selectTemplate(templateFile, repositoryName) {
   );
 }
 
-function renderTemplate(template, files, date = new Date()) {
+/** Replace recognized template tags with staged-file and date values. */
+function renderTemplate(template, files, date = new Date(), allFiles = files) {
   const values = {
     'nate-date': formatDate(date),
     'staged-files': files.join(', '),
-    'staged-files-compact': formatCompactFiles(files),
+    'staged-files-compact': formatCompactFiles(files, allFiles),
   };
 
   return template.replace(/%%([^%]+)%%/g, (tag, name) => {
@@ -189,6 +273,7 @@ function renderTemplate(template, files, date = new Date()) {
   });
 }
 
+/** Copy text to the Windows clipboard and verify that it arrived unchanged. */
 function copyToClipboard(text) {
   const command =
     '$ErrorActionPreference = "Stop"; ' +
@@ -216,6 +301,7 @@ function copyToClipboard(text) {
   }
 }
 
+/** Build a commit message from staged repositories and print or copy it. */
 function main() {
   const workspaceRoot = path.resolve(process.argv[2] || process.cwd());
   const printOnly = process.argv.includes('--print-only');
@@ -238,6 +324,7 @@ function main() {
   }
 
   const { repositoryRoot, files } = withStagedFiles[0];
+  const allFiles = repositoryFiles(repositoryRoot);
   const templatePath = path.join(repositories[0], TEMPLATE_RELATIVE_PATH);
   if (!fs.existsSync(templatePath)) {
     throw new Error(`Commit message template not found: ${templatePath}`);
@@ -248,7 +335,7 @@ function main() {
     templateFile,
     path.basename(repositoryRoot),
   );
-  const message = renderTemplate(template, files);
+  const message = renderTemplate(template, files, new Date(), allFiles);
   if (printOnly) {
     process.stdout.write(message);
     return;
@@ -269,8 +356,10 @@ if (require.main === module) {
 
 module.exports = {
   formatCompactFiles,
+  fileDirectories,
   formatFilePath,
   formatDate,
+  repositoryFiles,
   renderTemplate,
   selectTemplate,
   stripTemplateComments,

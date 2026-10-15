@@ -33,6 +33,8 @@ MULTIPLE_CONTEXT_ERROR = (
 
 @dataclass(frozen=True)
 class TranspilerConfig:
+    """Describe one language's keymap source and transpiler callable."""
+
     language: str
     source: Path
     callable_path: str
@@ -59,6 +61,7 @@ def parse_key_list(raw_value: str) -> list[str]:
 def read_config(
     root: Path,
 ) -> tuple[Path, list[str], str, list[TranspilerConfig]]:
+    """Load environment output, keymap, execution-mode, and transpiler settings."""
     config_path = root / CONFIG_FILE
     config = configparser.ConfigParser()
     if not config.read(config_path):
@@ -126,6 +129,7 @@ def context_state_lines(root: Path) -> list[str]:
 
 
 def read_keymap(root: Path) -> dict[str, dict[str, Any]]:
+    """Load named key definitions from the project's keymap JSON file."""
     with (root / KEYMAP_FILE).open("r", encoding="utf-8") as handle:
         keymap_data = json.load(handle)
     keymap_section = (
@@ -138,6 +142,7 @@ def read_keymap(root: Path) -> dict[str, dict[str, Any]]:
 
 
 def invoke_transpiler(config: TranspilerConfig) -> str:
+    """Import and call the configured transpiler on its source file."""
     if ":" not in config.callable_path:
         raise ValueError(
             "A configured transpiler must use 'module.path:callable' format, "
@@ -184,6 +189,7 @@ def invoke_transpiler(config: TranspilerConfig) -> str:
 
 
 def transpile_keymap(root: Path, transpilers: list[TranspilerConfig]) -> None:
+    """Combine Python and translated keymap functions into a validated script."""
     python_source_path = root / PYTHON_KEYMAP_SOURCE
     output_path = root / KEYMAP_SCRIPT
     if not python_source_path.is_file():
@@ -219,6 +225,7 @@ def transpile_keymap(root: Path, transpilers: list[TranspilerConfig]) -> None:
 def load_function_module(
     root: Path, execution_mode: str, transpilers: list[TranspilerConfig]
 ):
+    """Generate and import the configured keymap functions as a Python module."""
     if execution_mode != "transpiler":
         raise ValueError(
             f"Unsupported keymap execution mode: {execution_mode!r}. "
@@ -236,6 +243,7 @@ def load_function_module(
 
 
 def call_keymap_function(module: Any, mapping: dict[str, Any]) -> Any:
+    """Call the function named by a keymap entry with its optional input value."""
     function_name = mapping.get("function")
     if not isinstance(function_name, str):
         raise ValueError(f"Keymap entry {mapping.get('name')!r} has no function name.")
@@ -246,6 +254,7 @@ def call_keymap_function(module: Any, mapping: dict[str, Any]) -> Any:
 
 
 def create_envfile() -> None:
+    """Build the configured environment file from context and keymap values."""
     root = project_root()
     envfile, requested_keys, execution_mode, transpilers = read_config(root)
     state_lines = context_state_lines(root)
