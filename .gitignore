@@ -2,4 +2,11 @@ extra/
 bio_fuel/
 node_modules/
 .infra/env/.tesenv
-.infra/nvctx/*
+.infra/env/config/user/
+.infra/env/config/user/*
+.infra/nvctx/saves/*
+.infra/nvctx/current/*
+.infra/bin/teches_init/teches.code-workspace
+**/*.code-workspace
+**/__pycache__/*
+**/*.egg-info/*
