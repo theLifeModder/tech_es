@@ -50,6 +50,7 @@ import { path } from 'node:path';
 import { execSync } from 'node:child_process';
 import { dir } from 'node:console';
 
+/** Resolve or create the target directory for package installation. */
 function setTargetParentPath(){
  
     const args = process.argv.slice(2);
@@ -91,6 +92,7 @@ function setTargetParentPath(){
     return targetParentPath;
 }
 
+/** Run a shell command with a timeout and optionally continue after failures. */
 async function runCommand(cmd, quiet = 'false', timeout = 300) {
 
     if(quiet !== 'true' && quiet !== 'false') {
@@ -121,6 +123,7 @@ async function runCommand(cmd, quiet = 'false', timeout = 300) {
     }
 }
 
+/** Find TechES package directories and try to install each with pip. */
 function install_teches_fs() {
 
     const targetParentPath = setTargetParentPath();

@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 def open_editor(file_path):
-    """Verifies physical VS Code host configurations and binds active instances."""
+    """Open a file in the running VS Code instance, or report a missing CLI."""
     editor_binary = shutil.which("code")
     
     if not editor_binary:

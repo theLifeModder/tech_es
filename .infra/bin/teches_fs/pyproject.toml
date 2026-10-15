@@ -6,11 +6,11 @@ dependencies = [
     "click>=8.0"
 ]
 
-[tool.setuptools]
-packages = ["actions", "plumbing_scripts", "actions.create", "actions.delete", "actions.edit"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
-[project.scripts]
-teches = "plumbing_scripts.plumbing_main:cli"
+[project.entry-points."teches.commands"]
+fs = "teches_fs.cli:fs_command"
 
 [build-system]
 requires = ["setuptools>=61.0.0"]

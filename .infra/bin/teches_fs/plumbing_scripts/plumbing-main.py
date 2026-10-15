@@ -3,7 +3,10 @@ import sys
 import click
 
 class TechesCliGroup(click.Group):
+    """Click group that requires a subcommand when invoked."""
+
     def parse_args(self, ctx, args):
+        """Reject an empty invocation before Click displays the group help."""
         if not args:
             click.echo("error! You need to specify a valid argument.", err=True)
             ctx.exit(1)
@@ -17,7 +20,7 @@ def cli():
 @cli.command(name="fs")
 @click.option("-e", "--edit", "edit_file", type=click.Path(), help="Open file in target instance editor.")
 def fs_command(edit_file):
-    """Handles the plumbing routing for file system management."""
+    """Route a requested file edit to the file-system editor action."""
     if not edit_file:
         click.echo("error! You need to specify a valid argument.", err=True)
         sys.exit(1)
