@@ -58,27 +58,108 @@ function stagedFiles(repositoryRoot) {
 }
 
 function formatCompactFiles(files) {
-  const groups = new Map();
+  const directories = new Set();
   for (const file of files) {
-    const directory = path.posix.dirname(file);
-    const group = groups.get(directory) || [];
-    group.push(path.posix.basename(file));
-    groups.set(directory, group);
+    directories.add(path.posix.dirname(file));
   }
 
-  return [...groups.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([directory, names]) => {
-      const prefix = directory === '.' ? '{proj}/' : `{proj}/${directory}/`;
-      return `${prefix}${names.join(';')}`;
-    })
+  const coveredDirectories = [];
+  for (const directory of [...directories].sort(
+    (left, right) => left.split('/').length - right.split('/').length ||
+      left.localeCompare(right),
+  )) {
+    if (
+      coveredDirectories.some(
+        (parent) =>
+          parent === '.' ||
+          directory.startsWith(`${parent}/`),
+      )
+    ) {
+      continue;
+    }
+    coveredDirectories.push(directory);
+  }
+
+  return coveredDirectories
+    .sort((left, right) => left.localeCompare(right))
+    .map((directory) =>
+      directory === '.' ? '{proj}/*' : `{proj}/${directory}/*`,
+    )
     .join(', ');
+}
+
+function formatFilePath(file) {
+  return `{proj}/${file}`;
 }
 
 function formatDate(date = new Date()) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${month}${day}${date.getFullYear()}`;
+}
+
+function stripTemplateComments(template) {
+  let output = '';
+  let cursor = 0;
+
+  while (cursor < template.length) {
+    const opening = template.indexOf('///', cursor);
+    if (opening === -1) {
+      output += template.slice(cursor);
+      break;
+    }
+
+    output += template.slice(cursor, opening);
+    const closing = template.indexOf('///', opening + 3);
+    if (closing === -1) {
+      break;
+    }
+
+    const comment = template.slice(opening, closing + 3);
+    output += comment.match(/\r\n|\r|\n/g)?.join('') || '';
+    cursor = closing + 3;
+  }
+
+  const prefixComment = output.indexOf('//<');
+  if (prefixComment !== -1 && output.indexOf('//<', prefixComment + 3) === -1) {
+    output = output.slice(prefixComment + 3);
+  }
+
+  return output.replace(/\/\/[^\r\n]*/g, '');
+}
+
+function selectTemplate(templateFile, repositoryName) {
+  const uncommentedTemplate = stripTemplateComments(templateFile);
+  const lines = uncommentedTemplate.match(/[^\n]*\n|[^\n]+$/g) || [];
+  const sections = new Map();
+  let currentSection = null;
+
+  for (const line of lines) {
+    const marker = /^[ \t]*%%template::?([^%]+)%%[ \t]*(?:\r?\n)?$/.exec(line);
+    if (marker) {
+      currentSection = marker[1].trim();
+      if (sections.has(currentSection)) {
+        throw new Error(`Duplicate template section: ${currentSection}`);
+      }
+      sections.set(currentSection, '');
+    } else if (currentSection !== null) {
+      sections.set(currentSection, sections.get(currentSection) + line);
+    }
+  }
+
+  if (sections.size === 0) {
+    return templateFile;
+  }
+  if (sections.has(repositoryName)) {
+    return sections.get(repositoryName);
+  }
+  if (sections.has('all')) {
+    return sections.get('all');
+  }
+  throw new Error(
+    `No commit message template for repository "${repositoryName}" ` +
+      'and no template::all fallback was found.',
+  );
 }
 
 function renderTemplate(template, files, date = new Date()) {
@@ -88,9 +169,24 @@ function renderTemplate(template, files, date = new Date()) {
     'staged-files-compact': formatCompactFiles(files),
   };
 
-  return template.replace(/%%([^%]+)%%/g, (tag, name) =>
-    Object.hasOwn(values, name) ? values[name] : tag,
-  );
+  return template.replace(/%%([^%]+)%%/g, (tag, name) => {
+    if (Object.hasOwn(values, name)) {
+      return values[name];
+    }
+
+    const indexedTag = /^(staged-files(?:-compact)?)\[(\d+)\]$/.exec(name);
+    if (!indexedTag) {
+      return tag;
+    }
+
+    const [, listName, indexText] = indexedTag;
+    const index = Number(indexText) - 1;
+    const file = index >= 0 && index < files.length ? files[index] : '';
+    if (listName === 'staged-files-compact') {
+      return file ? formatFilePath(file) : '';
+    }
+    return file;
+  });
 }
 
 function copyToClipboard(text) {
@@ -98,12 +194,15 @@ function copyToClipboard(text) {
     '$ErrorActionPreference = "Stop"; ' +
     '$encoded = [Console]::In.ReadLine(); ' +
     'if ($null -eq $encoded) { exit 1 }; ' +
-    'Set-Clipboard -Value ([Text.Encoding]::UTF8.GetString(' +
-    '[Convert]::FromBase64String($encoded)))';
+    '$text = [Text.Encoding]::UTF8.GetString(' +
+    '[Convert]::FromBase64String($encoded)); ' +
+    'Set-Clipboard -Value $text; ' +
+    '$copied = Get-Clipboard -Raw; ' +
+    'if ($copied -cne $text) { throw "Clipboard verification failed." }';
   const encoded = Buffer.from(text, 'utf8').toString('base64');
   const result = spawnSync(
     'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-Command', command],
+    ['-NoProfile', '-NonInteractive', '-STA', '-Command', command],
     { input: encoded, encoding: 'utf8' },
   );
 
@@ -139,12 +238,16 @@ function main() {
   }
 
   const { repositoryRoot, files } = withStagedFiles[0];
-  const templatePath = path.join(repositoryRoot, TEMPLATE_RELATIVE_PATH);
+  const templatePath = path.join(repositories[0], TEMPLATE_RELATIVE_PATH);
   if (!fs.existsSync(templatePath)) {
     throw new Error(`Commit message template not found: ${templatePath}`);
   }
 
-  const template = fs.readFileSync(templatePath, 'utf8');
+  const templateFile = fs.readFileSync(templatePath, 'utf8');
+  const template = selectTemplate(
+    templateFile,
+    path.basename(repositoryRoot),
+  );
   const message = renderTemplate(template, files);
   if (printOnly) {
     process.stdout.write(message);
@@ -164,4 +267,11 @@ if (require.main === module) {
   }
 }
 
-module.exports = { formatCompactFiles, formatDate, renderTemplate };
+module.exports = {
+  formatCompactFiles,
+  formatFilePath,
+  formatDate,
+  renderTemplate,
+  selectTemplate,
+  stripTemplateComments,
+};

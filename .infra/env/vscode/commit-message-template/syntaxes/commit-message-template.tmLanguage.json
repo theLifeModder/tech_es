@@ -1,0 +1,51 @@
+{
+  "scopeName": "text.commit-message-template",
+  "patterns": [
+    {
+      "include": "#prefix-comment"
+    },
+    {
+      "include": "#block-comment"
+    },
+    {
+      "include": "#line-comment"
+    },
+    {
+      "include": "#valid-template-tag"
+    },
+    {
+      "include": "#valid-value-tag"
+    },
+    {
+      "include": "#invalid-tag"
+    }
+  ],
+  "repository": {
+    "prefix-comment": {
+      "name": "comment.block",
+      "begin": "\\A(?=[\\s\\S]*//<)",
+      "end": "//<"
+    },
+    "block-comment": {
+      "name": "comment.block",
+      "begin": "///",
+      "end": "///"
+    },
+    "line-comment": {
+      "name": "comment.line",
+      "match": "//(?![/<])[^\\r\\n]*"
+    },
+    "valid-template-tag": {
+      "name": "constant.other.placeholder",
+      "match": "^[ \\t]*%%template::?[^%\\r\\n]+%%[ \\t]*$"
+    },
+    "valid-value-tag": {
+      "name": "constant.other.placeholder",
+      "match": "%%(?:nate-date|staged-files(?:-compact)?(?:\\[\\d+\\])?)%%"
+    },
+    "invalid-tag": {
+      "name": "invalid.illegal",
+      "match": "%%[^%\\r\\n]*%%"
+    }
+  }
+}

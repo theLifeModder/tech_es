@@ -1,0 +1,41 @@
+{
+  "name": "commit-message-template",
+  "displayName": "Commit Message Template",
+  "description": "Syntax highlighting for TechES commit-message templates.",
+  "version": "0.2.0",
+  "publisher": "thelifemodder",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "commitMessageTemplate",
+        "aliases": [
+          "Commit Message Template",
+          "commit-message-template"
+        ],
+        "filenames": [
+          "commit-message-template"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "commitMessageTemplate",
+        "scopeName": "text.commit-message-template",
+        "path": "./syntaxes/commit-message-template.tmLanguage.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Commit Message Template",
+        "uiTheme": "vs-dark",
+        "path": "./themes/commit-message-template-color-theme.json"
+      }
+    ]
+  }
+}

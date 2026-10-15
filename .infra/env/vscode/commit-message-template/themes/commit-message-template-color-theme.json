@@ -1,0 +1,37 @@
+{
+  "name": "Commit Message Template",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#1E1E1E",
+    "editor.foreground": "#D4D4D4"
+  },
+  "tokenColors": [
+    {
+      "scope": "text.commit-message-template",
+      "settings": {
+        "foreground": "#FFFFFF"
+      }
+    },
+    {
+      "scope": "text.commit-message-template constant.other.placeholder",
+      "settings": {
+        "foreground": "#00FF00"
+      }
+    },
+    {
+      "scope": "text.commit-message-template invalid.illegal",
+      "settings": {
+        "foreground": "#FF0000"
+      }
+    },
+    {
+      "scope": [
+        "text.commit-message-template comment.block",
+        "text.commit-message-template comment.line"
+      ],
+      "settings": {
+        "foreground": "#808080"
+      }
+    }
+  ]
+}

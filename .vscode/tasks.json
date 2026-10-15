@@ -15,7 +15,7 @@
       "problemMatcher": [],
       "presentation": {
         "echo": false,
-        "reveal": "never",
+        "reveal": "always",
         "focus": false,
         "panel": "dedicated"
       }
