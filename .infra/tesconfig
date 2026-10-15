@@ -1,7 +1,0 @@
-[env]
-    envfile-location = C:\Users\ntolb\MyStuff\Programming Projects\lifemodder\teches\.infra\.tesenv
-[keymap]
-    envfile-keys-list = [DEVICE_NAME, OS, USER, PARENT_PROJECT_LOC, INSTALLED_CHILDREN, CHILD_LOC,
-        MCT_SCRIPTS_LOC, MCT_RP_FILES_LOC, MCT_BP_FILES_LOC, PARENT_PACKAGE_JSON_LOC, PARENT_NODE_MODULES_LOC]
-[nvctx]
-        default-nvctx-folder = .infra\env\nvctx\current

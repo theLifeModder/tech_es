@@ -1,0 +1,11 @@
+pyproject.toml
+actions/create/teches-fs-create.py
+actions/delete/teches-fs-delete.py
+actions/edit/teches-fs-edit.py
+plumbing_scripts/plumbing-main.py
+teches_fs.egg-info/PKG-INFO
+teches_fs.egg-info/SOURCES.txt
+teches_fs.egg-info/dependency_links.txt
+teches_fs.egg-info/entry_points.txt
+teches_fs.egg-info/requires.txt
+teches_fs.egg-info/top_level.txt

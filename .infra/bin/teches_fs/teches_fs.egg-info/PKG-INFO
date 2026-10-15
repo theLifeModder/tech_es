@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: teches_fs
+Version: 1.0.0
+Summary: Automated out-of-the-box CLI helper for Node.js file system actions.
+Requires-Dist: click>=8.0

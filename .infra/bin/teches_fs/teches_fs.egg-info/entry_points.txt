@@ -1,0 +1,2 @@
+[console_scripts]
+teches = plumbing_scripts.plumbing_main:cli

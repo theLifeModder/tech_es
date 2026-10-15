@@ -1,0 +1,19 @@
+[env]
+    envfile-location = C://Users/ntolb/MyStuff/Programming Projects/lifemodder/teches/.infra/.tesenv
+[keymap]
+    keymap-base-location = .infra/env/keymap/
+    envfile-keys-list = [DEVICE_NAME, OS, USER, PARENT_PROJECT_LOC, INSTALLED_CHILDREN, CHILD_LOC, MCT_SCRIPTS_LOC, MCT_RP_FILES_LOC, MCT_BP_FILES_LOC, PARENT_PACKAGE_JSON_LOC, PARENT_NODE_MODULES_LOC]
+    supported-langs = [python, javascript]
+    # Use configured language transpilers to generate Python keymap functions.
+    execution-mode = transpiler
+[keymap.javascript-transpiler]
+    source = .infra/env/keymap/scripts/setenv.js
+    # Replace this callable to plug in another JS-to-Python transpiler.
+    # It must accept source text and return Python source text.
+    transpiler = jsconvert.transpiler:format_code
+    # Optional import root for vendored transpiler modules.
+    module-path = .infra/env/bin/transpilers/JSConvert/src
+[nvctx]
+    nvctx-location = .infra/env/nvctx
+    current-context-location = .infra/env/nvctx/current/
+    alternate-contexts-location = .infra/env/nvctx/saves/
