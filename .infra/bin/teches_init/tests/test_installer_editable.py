@@ -9,8 +9,11 @@ from unittest.mock import patch
 
 from teches_init.installer import (
     COMMIT_MESSAGE_GENERATOR_DIRECTORY,
+    INITIALIZER_PACKAGE_DIRECTORY,
+    InstallOptions,
     _install_commit_message_generator,
     _install_editable,
+    _package_candidates,
 )
 
 
@@ -26,6 +29,21 @@ class EditableInstallTests(unittest.TestCase):
                 "url": self.package_directory.as_uri(),
             }
         )
+
+    def test_discovers_initializer_in_its_package_directory(self) -> None:
+        """Find the initializer project directly under the package source directory."""
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            source_bin = Path(temporary_directory)
+            initializer_directory = source_bin / INITIALIZER_PACKAGE_DIRECTORY
+            initializer_directory.mkdir(parents=True)
+            (initializer_directory / "pyproject.toml").write_text(
+                "[project]\nname = 'teches_init'\n",
+                encoding="utf-8",
+            )
+
+            candidates = _package_candidates(source_bin, InstallOptions())
+
+        self.assertIn(("install", initializer_directory), candidates)
 
     @patch("teches_init.installer.subprocess.run")
     @patch("teches_init.installer.distribution")

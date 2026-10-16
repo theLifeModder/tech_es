@@ -40,9 +40,8 @@ SYSTEM_NAME_BY_MODULE = {
     "nvctx": "nvctx",
     "project": "restore-sys",
 }
-COMMIT_MESSAGE_GENERATOR_DIRECTORY = Path(
-    "env/bin/teches_commit_message_generator"
-)
+COMMIT_MESSAGE_GENERATOR_DIRECTORY = Path("env/bin/teches_commit_message_generator")
+INITIALIZER_PACKAGE_DIRECTORY = Path("teches_init")
 
 
 @dataclass(frozen=True)
@@ -101,6 +100,9 @@ def _package_candidates(
                 and (package_directory / "pyproject.toml").is_file()
             ):
                 candidates[module_for_package(package_directory)] = package_directory
+        initializer_directory = source_bin / INITIALIZER_PACKAGE_DIRECTORY
+        if (initializer_directory / "pyproject.toml").is_file():
+            candidates["install"] = initializer_directory
 
     if (
         options.module is not None
@@ -116,6 +118,11 @@ def _package_candidates(
             if (location / "pyproject.toml").is_file()
             else location / module_name
         )
+        if (
+            options.module == "install"
+            and not (package_directory / "pyproject.toml").is_file()
+        ):
+            package_directory = location / INITIALIZER_PACKAGE_DIRECTORY
         if not (package_directory / "pyproject.toml").is_file():
             raise FileNotFoundError(
                 f"Package for module {options.module!r} was not found at "
@@ -161,6 +168,7 @@ def _copy_directory(source: Path, destination: Path, force: bool) -> None:
             f"Destination already exists: {resolved_destination}. "
             "Use --force to merge and replace files."
         )
+    resolved_destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, destination, dirs_exist_ok=force)
 
 
@@ -301,7 +309,9 @@ def install_infrastructure(
     for module, package_directory in _package_candidates(source_bin, options):
         install_directory = package_directory
         if custom_infra_root and options.module != module:
-            install_directory = infra_root / "bin" / package_directory.name
+            install_directory = (
+                infra_root / "bin" / package_directory.relative_to(source_bin)
+            )
             if not copy_whole_infra:
                 _copy_directory(package_directory, install_directory, options.force)
         _install_editable(install_directory, options.force)

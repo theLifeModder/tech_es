@@ -12,6 +12,6 @@ dependencies = ["click>=8.0"]
 [project.scripts]
 teches = "teches_init.cli:cli"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
+[tool.setuptools]
+packages = ["teches_init"]
+package-dir = { "" = "src" }
