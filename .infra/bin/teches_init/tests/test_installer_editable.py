@@ -30,8 +30,8 @@ class EditableInstallTests(unittest.TestCase):
             }
         )
 
-    def test_discovers_initializer_in_its_package_directory(self) -> None:
-        """Find the initializer project directly under the package source directory."""
+    def test_does_not_install_initializer_during_default_discovery(self) -> None:
+        """Avoid reinstalling the bootstrap package as part of its own init."""
         with tempfile.TemporaryDirectory() as temporary_directory:
             source_bin = Path(temporary_directory)
             initializer_directory = source_bin / INITIALIZER_PACKAGE_DIRECTORY
@@ -42,6 +42,24 @@ class EditableInstallTests(unittest.TestCase):
             )
 
             candidates = _package_candidates(source_bin, InstallOptions())
+
+        self.assertNotIn(("install", initializer_directory), candidates)
+
+    def test_can_explicitly_select_initializer_package(self) -> None:
+        """Allow intentional installation when the install module is requested."""
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            source_bin = Path(temporary_directory)
+            initializer_directory = source_bin / INITIALIZER_PACKAGE_DIRECTORY
+            initializer_directory.mkdir(parents=True)
+            (initializer_directory / "pyproject.toml").write_text(
+                "[project]\nname = 'teches_init'\n",
+                encoding="utf-8",
+            )
+
+            candidates = _package_candidates(
+                source_bin,
+                InstallOptions(include=("install",)),
+            )
 
         self.assertIn(("install", initializer_directory), candidates)
 

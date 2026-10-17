@@ -18,7 +18,10 @@ current project's local Git config with those values. If confirmed, it sets
 `user.name` and `user.email` in that project's `.git/config`; it does not
 change the global Git config. It also writes the values to
 `.infra/env/config/user/userdata.ini` under the `[default]` profile, then
-installs editable TechES packages found under `.infra/bin`.
+installs editable TechES command packages found under `.infra/bin`. It does not
+reinstall the `teches_init` bootstrap package as part of its default run; request
+the `install` module explicitly if you intentionally want to install that
+package.
 Initialization also installs the commit-message generator from
 `.infra/env/bin/teches_commit_message_generator`, reporting its installation
 progress and any failures in the terminal.

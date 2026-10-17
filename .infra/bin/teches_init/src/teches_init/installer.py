@@ -82,6 +82,12 @@ def module_for_package(package_directory: Path) -> str:
 
 def _is_selected(module: str, options: InstallOptions) -> bool:
     """Apply include and exclude filters to a module name."""
+    if (
+        module == "install"
+        and "install" not in options.include
+        and options.module != "install"
+    ):
+        return False
     if options.include and module not in options.include:
         return False
     return module not in options.exclude
