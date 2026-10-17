@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "teches_user"
+version = "0.1.0"
+description = "Manage TechES user profiles and project-local Git identity."
+requires-python = ">=3.10"
+dependencies = ["click>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.entry-points."teches.commands"]
+user = "teches_user.cli:user_command"

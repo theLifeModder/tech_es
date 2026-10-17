@@ -95,6 +95,22 @@ teches fs --edit path\to\file
 
 The `code` command must be available on `PATH`.
 
+### User profiles
+
+The `teches_user` package adds profile management for project-local user and
+Git identity:
+
+```powershell
+teches user --create-profile profname:work uname:"Work User" email:work@example.com
+teches user --set-profile work
+teches user --update-gitinfo
+```
+
+Named profiles are stored in `.infra/env/config/user/userdata.ini`. Activating
+a profile updates the `[default]` profile and offers to update this repository's
+local Git identity; global Git config is not changed. See the
+[`teches user` guide](.infra/bin/teches_user/README.md) for all options.
+
 ### `bio_fuel` Bedrock add-on
 
 Install its JavaScript dependencies from the project directory:
