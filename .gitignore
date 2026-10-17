@@ -1,7 +1,7 @@
 extra/
 bio_fuel/
 node_modules/
-.infra/env/.tesenv
+.infra/env/config/.tesenv
 .infra/env/config/user/
 .infra/env/config/user/*
 .infra/nvctx/saves/*
@@ -10,3 +10,4 @@ node_modules/
 **/*.code-workspace
 **/__pycache__/*
 **/*.egg-info/*
+.infra/doc/examples/userdata.ini 

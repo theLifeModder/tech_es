@@ -1,11 +1,18 @@
-[env]
-    envfile-location = C://Users/ntolb/MyStuff/Programming Projects/lifemodder/teches/.infra/.tesenv
 [keymap]
     keymap-base-location = .infra/env/keymap/
-    envfile-keys-list = [DEVICE_NAME, OS, USER, PARENT_PROJECT_LOC, INSTALLED_CHILDREN, CHILD_LOC, MCT_SCRIPTS_LOC, MCT_RP_FILES_LOC, MCT_BP_FILES_LOC, PARENT_PACKAGE_JSON_LOC, PARENT_NODE_MODULES_LOC]
+    envfile-keys-list = [DEVICE_NAME, OS, USER, PARENT_PROJECT_LOC, INSTALLED_CHILDREN, CHILD_LOCS, MCT_SCRIPTS_LOC, MCT_RP_FILES_LOC, MCT_BP_FILES_LOC, PARENT_PACKAGE_JSON_LOC, PARENT_PACKAGE_LOCK_JSON_LOC, PARENT_NODE_MODULES_LOC, PARENT_PRETTIER_RC_LOC, RC_FILE_PRESENT_IN_ENV, LAST_LOADED_NVCTX, PYTHON_USER_INSTALL, PYTHON_VENV_INSTALL, PYTHON_USER_VERSION, PYTHON_VENV_VERSION, USER_VENV_BASE_LOCATION, USER_VENV_SCRIPTS_LOCATION, USER_VENV_BIN_LOCATION, COMMAND_TOOLS_LOCATION]
     supported-langs = [python, javascript]
     # Use configured language transpilers to generate Python keymap functions.
     execution-mode = transpiler
+[python]
+    # Use "auto" to detect an activated venv or the project's .venv folder.
+    # Set an absolute or project-relative path to use a venv stored elsewhere.
+    venv-location = auto
+    # "auto" reads the base interpreter from the selected venv's pyvenv.cfg.
+    user-interpreter = auto
+[tools]
+    # Project-relative by default; this is where TechES command packages live.
+    command-tools-location = .infra/bin
 [keymap.javascript-transpiler]
     source = .infra/env/keymap/scripts/setenv.js
     # Replace this callable to plug in another JS-to-Python transpiler.

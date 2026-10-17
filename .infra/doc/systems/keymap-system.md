@@ -33,9 +33,8 @@ The current checkout places keymap-related files here:
 | `.infra/env/bin/envWriter.py`                    | Reads configuration/context/keymap values and writes `.tesenv`.                                                                                                                                                            |
 | `.infra/env/config/tesconfig`                    | Intended configuration for output location and requested environment keys.                                                                                                                                                   |
 
-The two source placeholders are empty in the current checkout. The generated
-Python file currently contains only a header comment, so there are no usable
-keymap functions supplied yet.
+The Python source defines the environment-discovery functions. The generated
+Python file is rebuilt by `envWriter.py`; do not edit it directly.
 
 ## Keymap data format
 
@@ -61,8 +60,10 @@ The current `envWriter.py` implementation expects `keymap.json` to contain a
 }
 ```
 
-In this shape, the writer indexes entries by `name`. Names should correspond
-to the identifiers listed in `envfile-keys-list` in `tesconfig`.
+In this shape, the writer emits keys named in `envfile-keys-list` first, in
+configured order, then appends any other keys from `keymap.keys` in list order.
+Duplicate names are emitted only once. Each entry's `name` determines the
+output variable and its `function` supplies the value.
 
 The writer reads entries from `keymap.keys`; it does not currently accept a
 top-level `keys` array as an alternative.
@@ -86,6 +87,43 @@ def format_value(value):
 An entry without a non-null `input` calls the function with no arguments. An
 entry with `input` calls it with that single argument. The return value is
 converted to text when the writer builds the `NAME = value` output line.
+
+## Python environment keys
+
+The configured Python keymap reports:
+
+- `PYTHON_USER_INSTALL`: directory containing the base Python interpreter.
+- `PYTHON_VENV_INSTALL`: the virtual environment's Python executable.
+- `PYTHON_USER_VERSION` and `PYTHON_VENV_VERSION`: versions reported by those
+  interpreters.
+- `USER_VENV_BASE_LOCATION`: virtual environment root.
+- `USER_VENV_SCRIPTS_LOCATION` and `USER_VENV_BIN_LOCATION`: the conventional
+  `Scripts` and `bin` paths under that root. On Windows, `Scripts` is used for
+  the venv executable; `bin` is still reported as a path even if it does not
+  exist on that platform.
+- `COMMAND_TOOLS_LOCATION`: resolved path configured by
+  `[tools] command-tools-location` in `tesconfig`.
+
+`[python] venv-location` accepts `auto` or an absolute/project-relative venv
+directory. In auto mode the functions use, in order, an activated
+`VIRTUAL_ENV`, the interpreter running the writer if it is itself a venv, or
+the project's `.venv`. The selected directory must contain `pyvenv.cfg` and
+its platform's Python executable. `[python] user-interpreter` accepts `auto`
+or an explicit interpreter path. Auto mode reads the base interpreter path
+from the selected venv's `pyvenv.cfg`, so a moved venv can still be located by
+setting `venv-location` without losing the base-Python association.
+
+The default command tools path is `.infra/bin`, relative to the project root.
+Set `command-tools-location` to another absolute or project-relative path if
+the TechES command packages are stored elsewhere.
+
+The existing machine, project, Node.js, MCT, and NVCTX keys are also mapped.
+Machine/OS/user/project-root values are detected, and common root Node.js paths
+are emitted only when those files or directories exist. Keys whose conventions
+are not yet defined (`INSTALLED_CHILDREN`, `CHILD_LOCS`, the MCT file
+locations, `RC_FILE_PRESENT_IN_ENV`, and `LAST_LOADED_NVCTX`) emit the literal
+`null`. The stray `PARENT_` line in the original `.tesenv` template is not a
+valid variable assignment and is not included.
 
 The writer copies `setenv.py` and invokes each configured transpiler to turn
 its source into Python. Configuration sections follow the pattern
@@ -138,56 +176,58 @@ their configured callable converts source text to Python source text.
 
 ## Environment writer integration
 
-The writer is part of the keymap system's runtime use: it determines which
-values to emit and invokes the mapped functions when context state does not
-provide a requested value.
+The writer is part of the keymap system's runtime use: it emits every
+configured key and every keymap key, then invokes mapped functions when context
+state does not provide an override.
 
 The current flow in `envWriter.py` is:
 
 1. Determine the project root relative to the writer's own file location.
-2. Read the configuration file for the destination `.tesenv` path and list
-   of requested key names.
+2. Read `tesconfig` for the output keys, keymap execution-mode, and transpiler
+   settings.
 3. Read a context `state` object if a file exists in the writer's configured
    current-context directory. More than one file is an error.
 4. Load `keymap.json`, combine `setenv.py` with outputs from each configured
    language transpiler, then import the generated `setenv_transpiled.py`.
 5. Begin output with `PROJECT_ROOT_LOC = <project root>`.
-6. For each requested name, in configured order:
+6. For configured names followed by any remaining names from `keymap.keys`:
    - use a matching context-state line if found;
-   - otherwise call the keymap function for that name if an entry exists;
+   - otherwise call its mapped function if a keymap entry exists;
    - otherwise write `NAME = none`.
-7. Append state lines not consumed by requested names.
-8. Create the destination directory if required and write the `.tesenv` file
-   with a final newline.
+7. Append state lines not consumed by keymap entries.
+8. Write `.infra/env/config/.tesenv` under the project root with a final
+   newline.
 
-Context state takes precedence over the keymap for requested names. The
-current code identifies a context entry using `line.startswith(key)`, so
-state lines should use the expected `NAME = value` format; this is a prefix
-check rather than an exact parsed-key comparison.
+Context state takes precedence over mapped values. The current code identifies
+a context entry using `line.startswith(key)`, so state lines should use the
+expected `NAME = value` format; this is a prefix check rather than an exact
+parsed-key comparison.
 
 ## Configuration used by the writer
 
 The project configuration is INI-style and parsed with Python's
-`configparser`. Section and key names are project-defined. In the current
-`tesconfig`, the writer-relevant settings are:
+`configparser`. It configures environment discovery and keymap execution. For
+example:
 
 ```ini
-[env]
-envfile-location = C:/path/to/project/.infra/.tesenv
-
 [keymap]
 keymap-base-location = .infra/env/keymap/
-envfile-keys-list = [DEVICE_NAME, OS, USER, PARENT_PROJECT_LOC]
+execution-mode = transpiler
+
+[python]
+venv-location = auto
+user-interpreter = auto
+
+[tools]
+command-tools-location = .infra/bin
 ```
 
-`envfile-location` selects the output file. `envfile-keys-list` is parsed as
-a comma-separated list; optional surrounding square brackets are removed,
-whitespace is trimmed, and optional quotes around items are stripped. Key
-names cannot contain commas with this parser.
-
-`keymap-base-location` is present in the config but the current writer does
-not read it. The writer uses source-code constants for the keymap, scripts,
-context directory, and config-file paths.
+`envfile-keys-list` selects the initial values and their order;
+`keymap.json` maps those names to functions and is also the safety net: every
+key declared there is emitted even if it is omitted from the config list.
+Configured names without keymap entries are emitted as `none`. The writer
+always places `.tesenv` at `.infra/env/config/.tesenv` under the project root.
+The config does not select the output path or contain executable code.
 
 ## Commands and installation
 
@@ -201,16 +241,15 @@ python .infra\env\bin\envWriter.py
 ```
 
 It takes no command-line arguments. It derives the project root from its own
-file location, reads its configuration, looks for context state, evaluates
-requested keymap functions, and writes the configured `.tesenv` output.
+file location, reads its environment/keymap configuration, looks for context
+state, evaluates the configured keymap functions, and writes the fixed project
+`.tesenv` output.
 Because it currently derives paths from the repository layout and fixed
 constants, changing the working directory is not intended to change which
 project it processes.
 
 Before invoking it, the config path, keymap JSON shape, and generated Python
-functions must match the assumptions documented above. With the files in the
-current checkout, the config path and `keys` JSON nesting mismatch mean this
-command will fail until those are reconciled. See
+functions must match the assumptions documented above. See
 [Current implementation limitations](#current-implementation-limitations).
 
 ### Infrastructure management command
@@ -291,8 +330,8 @@ The current checkout has a few remaining path/documentation mismatches:
 - `envWriter.py` sets `CURRENT_CONTEXT_DIRECTORY` to
   `.infra/env/nvctx/current`, while the checked-in NVCTX context layout is
   under `.infra/env/nvctx/contexts/current`.
-- `setenv.py` and the configured JavaScript source are empty, so the generated module
-  currently contains no keymap functions.
+- The configured JavaScript source is empty; the Python keymap functions are
+  supplied by `setenv.py`.
 - `keymap-base-location`, `supported-langs`, and the translator declarations
   in `keymap.json` are not currently consumed by the writer.
 - The writer's `project_root()` calculation (`script.parents[3]`) resolves to

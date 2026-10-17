@@ -1,8 +1,98 @@
 {
   "keymap": {
     "keys": [
-      { "name": "PARENT_PROJECT_LOC", "function": "", "input": "" },
-      { "name": "PARENT_PROJECT_LOC", "function": "", "input": "" }
+      {
+        "name": "DEVICE_NAME",
+        "function": "get_device_name"
+      },
+      {
+        "name": "OS",
+        "function": "get_os"
+      },
+      {
+        "name": "USER",
+        "function": "get_user"
+      },
+      {
+        "name": "PARENT_PROJECT_LOC",
+        "function": "get_parent_project_loc"
+      },
+      {
+        "name": "INSTALLED_CHILDREN",
+        "function": "get_installed_children"
+      },
+      {
+        "name": "CHILD_LOCS",
+        "function": "get_child_locs"
+      },
+      {
+        "name": "MCT_SCRIPTS_LOC",
+        "function": "get_mct_scripts_loc"
+      },
+      {
+        "name": "MCT_RP_FILES_LOC",
+        "function": "get_mct_rp_files_loc"
+      },
+      {
+        "name": "MCT_BP_FILES_LOC",
+        "function": "get_mct_bp_files_loc"
+      },
+      {
+        "name": "PARENT_PACKAGE_JSON_LOC",
+        "function": "get_parent_package_json_loc"
+      },
+      {
+        "name": "PARENT_PACKAGE_LOCK_JSON_LOC",
+        "function": "get_parent_package_lock_json_loc"
+      },
+      {
+        "name": "PARENT_NODE_MODULES_LOC",
+        "function": "get_parent_node_modules_loc"
+      },
+      {
+        "name": "PARENT_PRETTIER_RC_LOC",
+        "function": "get_parent_prettier_rc_loc"
+      },
+      {
+        "name": "RC_FILE_PRESENT_IN_ENV",
+        "function": "get_rc_file_present_in_env"
+      },
+      {
+        "name": "LAST_LOADED_NVCTX",
+        "function": "get_last_loaded_nvctx"
+      },
+      {
+        "name": "PYTHON_USER_INSTALL",
+        "function": "get_python_user_install"
+      },
+      {
+        "name": "PYTHON_VENV_INSTALL",
+        "function": "get_python_venv_install"
+      },
+      {
+        "name": "PYTHON_USER_VERSION",
+        "function": "get_python_user_version"
+      },
+      {
+        "name": "PYTHON_VENV_VERSION",
+        "function": "get_python_venv_version"
+      },
+      {
+        "name": "USER_VENV_BASE_LOCATION",
+        "function": "get_user_venv_base_location"
+      },
+      {
+        "name": "USER_VENV_SCRIPTS_LOCATION",
+        "function": "get_user_venv_scripts_location"
+      },
+      {
+        "name": "USER_VENV_BIN_LOCATION",
+        "function": "get_user_venv_bin_location"
+      },
+      {
+        "name": "COMMAND_TOOLS_LOCATION",
+        "function": "get_command_tools_location"
+      }
     ]
   },
   "translators": {

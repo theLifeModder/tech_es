@@ -23,6 +23,7 @@ KEYMAP_FILE = Path(".infra/env/keymap/keymap.json")
 PYTHON_KEYMAP_SOURCE = Path(".infra/env/keymap/scripts/setenv.py")
 KEYMAP_SCRIPT = Path(".infra/env/keymap/scripts/setenv_transpiled.py")
 CONFIG_FILE = Path(".infra/env/config/tesconfig")
+ENVFILE_PATH = Path(".infra/env/config/.tesenv")
 
 MULTIPLE_CONTEXT_ERROR = (
     "ERROR: you can only have 1 environment context file chosen as your current. "
@@ -49,7 +50,7 @@ def project_root() -> Path:
 
 
 def parse_key_list(raw_value: str) -> list[str]:
-    """Parse an INI value such as [A, B, C] into a list of key names."""
+    """Parse a config value such as [A, B, C] into a list of key names."""
     value = raw_value.strip()
     if value.startswith("[") and value.endswith("]"):
         value = value[1:-1]
@@ -60,14 +61,13 @@ def parse_key_list(raw_value: str) -> list[str]:
 
 def read_config(
     root: Path,
-) -> tuple[Path, list[str], str, list[TranspilerConfig]]:
-    """Load environment output, keymap, execution-mode, and transpiler settings."""
+) -> tuple[list[str], str, list[TranspilerConfig]]:
+    """Load configured output keys and keymap execution/transpiler settings."""
     config_path = root / CONFIG_FILE
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
     if not config.read(config_path):
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    envfile_location = config.get("env", "envfile-location")
     keys = parse_key_list(config.get("keymap", "envfile-keys-list"))
     execution_mode = config.get(
         "keymap", "execution-mode", fallback="transpiler"
@@ -102,10 +102,7 @@ def read_config(
                 module_path=module_path,
             )
         )
-    destination = Path(envfile_location)
-    if not destination.is_absolute():
-        destination = root / destination
-    return destination, keys, execution_mode, transpilers
+    return keys, execution_mode, transpilers
 
 
 def context_state_lines(root: Path) -> list[str]:
@@ -139,6 +136,13 @@ def read_keymap(root: Path) -> dict[str, dict[str, Any]]:
     if not isinstance(keys, list):
         raise ValueError("The keymap JSON must contain a 'keymap.keys' array.")
     return {item["name"]: item for item in keys if isinstance(item, dict) and "name" in item}
+
+
+def ordered_output_keys(
+    requested_keys: list[str], keymap: dict[str, dict[str, Any]]
+) -> list[str]:
+    """Keep configured ordering while ensuring every keymap value is emitted."""
+    return list(dict.fromkeys([*requested_keys, *keymap]))
 
 
 def invoke_transpiler(config: TranspilerConfig) -> str:
@@ -254,17 +258,16 @@ def call_keymap_function(module: Any, mapping: dict[str, Any]) -> Any:
 
 
 def create_envfile() -> None:
-    """Build the configured environment file from context and keymap values."""
+    """Build the project environment file from context and keymap values."""
     root = project_root()
-    envfile, requested_keys, execution_mode, transpilers = read_config(root)
+    requested_keys, execution_mode, transpilers = read_config(root)
     state_lines = context_state_lines(root)
     keymap = read_keymap(root)
     functions = load_function_module(root, execution_mode, transpilers)
 
     output = [f"PROJECT_ROOT_LOC = {root}"]
-    for key in requested_keys:
-        # Context state takes precedence. The requested matching rule is a
-        # prefix match against the stored ``key = value`` strings.
+    for key in ordered_output_keys(requested_keys, keymap):
+        # Context state takes precedence over the mapped default value.
         matching_index = next(
             (index for index, line in enumerate(state_lines) if line.startswith(key)),
             None,
@@ -272,11 +275,14 @@ def create_envfile() -> None:
         if matching_index is not None:
             output.append(state_lines.pop(matching_index))
         elif key in keymap:
-            output.append(f"{key} = {call_keymap_function(functions, keymap[key])}")
+            output.append(
+                f"{key} = {call_keymap_function(functions, keymap[key])}"
+            )
         else:
             output.append(f"{key} = none")
 
     output.extend(state_lines)
+    envfile = root / ENVFILE_PATH
     envfile.parent.mkdir(parents=True, exist_ok=True)
     envfile.write_text("\n".join(output) + "\n", encoding="utf-8")
 
